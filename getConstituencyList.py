@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import jsonpickle
+from pymongo import MongoClient
 
 class constituency:
     name = ""
@@ -23,7 +24,6 @@ class constituency:
 
 def find_between(s, start, end):
   return (s.split(start))[1].split(end)[0]
-
         
 state_elections_url = sys.argv[1]
 full_url = "http://myneta.info/" + state_elections_url + "/"
@@ -40,8 +40,16 @@ for element in districtHTML:
 constituencyHTML = soup.find_all("div", class_="items")
 
 constituencyList = []
-
 districtId = -1
+
+client = MongoClient("mongodb://soumyadeep:thebayesianconpiracy@ds135916.mlab.com:35916/ministryofmagic")
+db = client.get_database()
+
+if ("constituencies" in db.collection_names()):
+    break
+else:
+    db.create_collection("constituencies")
+    
 for element in constituencyHTML:
     stringList = element.get_text().strip().split(':')
     if (len(stringList) < 2):
@@ -49,7 +57,8 @@ for element in constituencyHTML:
     if (stringList[0] == '1'):
         districtId+=1
     constituencyId = find_between(str(element), "constituency_id=", '"')
-    constituencyList.append(constituency(stringList[1],districtList[districtId] , constituencyId, 0))
+    single_constituency = constituency(stringList[1],districtList[districtId] , constituencyId, 0)
+    constituencyList.append(single_constituency)
 #    constituencyList.append(element.a.get_text().strip())
 
 
